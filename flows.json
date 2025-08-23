@@ -1,0 +1,1101 @@
+[
+    {
+        "id": "ab105395fabf5a76",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "6be1f0f6353ba3d4",
+        "type": "tab",
+        "label": "Flow 1 (Data Ingestion & Classification)",
+        "disabled": false,
+        "info": "Fetches live crypto data, calculates the percentage change from the last known price, classifies this change into a fluctuation cluster (small, medium, large), and sends data to the UI and the database.",
+        "env": []
+    },
+    {
+        "id": "57eb9df0f847111d",
+        "type": "tab",
+        "label": "Flow 2 (UI & Storage)",
+        "disabled": false,
+        "info": "Initializes the database table for historical data and displays the classified crypto data on the dashboard."
+    },
+    {
+        "id": "29e4f1e58b553ca9",
+        "type": "tab",
+        "label": "Flow 3 (K-means Clustering Model Training)",
+        "disabled": false,
+        "info": "Periodically fetches ALL historical price data, calculates all historical percentage changes, and runs K-means clustering to define what constitutes a 'small', 'medium', or 'large' price fluctuation. The resulting model is stored globally."
+    },
+    {
+        "id": "4b8f30f7c6bd39d8",
+        "type": "tab",
+        "label": "Flow 4 (RabbitMQ)",
+        "disabled": false,
+        "info": "### Αυτό το flow διαχειρίζεται την αποστολή και παραλαβή μηνυμάτων μέσω RabbitMQ για δύο κύριες λειτουργίες:\r\n\r\n**Διανομή ειδοποιήσεων (alerts)**\r\n\r\n- Alerts για διακυμάνσεις τιμών αποστέλλονται στο topic exchange amq.topic.\r\n- Καταναλωτές (User1, User2, User3) λαμβάνουν μόνο τα alerts που τους αναλογούν:\r\n  - Free users λαμβάνουν μόνο notifications.bitcoin\r\n  - Premium users λαμβάνουν notifications.* (όλα)\r\n",
+        "env": []
+    },
+    {
+        "id": "f0bff27268ff3a20",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-dark",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#04959f",
+                "baseFont": "Arial,Arial,Helvetica,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#097479",
+                    "value": "#04959f",
+                    "edited": true
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#04959f",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#06dbea",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#555555",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#eeeeee",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#04959f",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "Arial,Arial,Helvetica,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 50,
+                "sy": 50,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "a6ba64d6f44b10be",
+        "type": "sqlitedb",
+        "db": "./coingecko.db",
+        "mode": "RWC"
+    },
+    {
+        "id": "3e1dea1b554d30b6",
+        "type": "ui_tab",
+        "name": "CoinGecko",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "f544e85ef4afb35b",
+        "type": "ui_group",
+        "name": "Διακύμανση Τιμών Κρυπτονομισμάτων",
+        "tab": "3e1dea1b554d30b6",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "c62f2a3a.a8b1d8",
+        "type": "ui_group",
+        "name": "Ιστορικό Τιμών Κρυπτονομίσματος",
+        "tab": "3e1dea1b554d30b6",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "2eb601ef650cf690",
+        "type": "amqp-broker",
+        "name": "lab",
+        "host": "10.100.59.183",
+        "port": 5672,
+        "vhost": "lab2025",
+        "tls": false,
+        "credsFromSettings": false
+    },
+    {
+        "id": "1a16a8d180604503",
+        "type": "inject",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Fetch Coins (Every 5 min)",
+        "props": [],
+        "repeat": "300",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 5,
+        "topic": "",
+        "x": 170,
+        "y": 100,
+        "wires": [
+            [
+                "435794dac142008d"
+            ]
+        ]
+    },
+    {
+        "id": "435794dac142008d",
+        "type": "http request",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Get CoinGecko Data",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 160,
+        "y": 160,
+        "wires": [
+            [
+                "8ea364aaf9ce5626"
+            ]
+        ]
+    },
+    {
+        "id": "8ea364aaf9ce5626",
+        "type": "json",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 140,
+        "y": 220,
+        "wires": [
+            [
+                "73640bc80f705522"
+            ]
+        ]
+    },
+    {
+        "id": "73640bc80f705522",
+        "type": "function",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Validate API Response",
+        "func": "if (Array.isArray(msg.payload)) {\n    return msg; // It's an array, proceed\n} else {\n    node.error(\"API did not return an array. Payload: \" + JSON.stringify(msg.payload));\n    return null; // Not an array, stop the flow\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 170,
+        "y": 280,
+        "wires": [
+            [
+                "9deafbb0101cc183"
+            ]
+        ]
+    },
+    {
+        "id": "9deafbb0101cc183",
+        "type": "function",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Calculate, Classify & Route",
+        "func": "// Get the trained clusters from global context\nconst clusters = global.get('price_fluctuation_clusters') || [];\n\n// Read previous prices into a constant. Do not modify this object.\nconst lastPrices = global.get('last_known_prices') || {};\n\n// Create a new, empty object to store the prices from the current run.\nconst newPrices = {};\n\nconst enriched_payload = [];\nconst sql_queries = [];\nconst alerts_payload = []; // Array for alert-worthy events\n\nif (clusters.length === 0) {\n    node.warn(\"Clusters have not been calculated yet. Skipping classification.\");\n    msg.payload.forEach(coin => {\n        coin.fluctuation_category = 'pending_model';\n        coin.percentage_change = 0;\n        enriched_payload.push(coin);\n        sql_queries.push({ topic: `INSERT INTO coingecko_history (coin_id, name, symbol, current_price) VALUES ('${coin.id}', '${coin.name.replace(/'/g, \"''\")}', '${coin.symbol}', ${coin.current_price});` });\n        newPrices[coin.id] = coin.current_price;\n    });\n} else {\n    msg.payload.forEach(coin => {\n        const currentPrice = coin.current_price;\n        const lastPrice = lastPrices[coin.id];\n        let percentageChange = 0;\n        let fluctuationCategory = 'new_coin';\n\n        if (lastPrice && lastPrice !== 0) {\n            percentageChange = ((currentPrice - lastPrice) / lastPrice) * 100;\n            \n            // Use the absolute value of the change for clustering\n            const absPercentageChange = Math.abs(percentageChange);\n\n            let minDistance = Infinity;\n            clusters.forEach(cluster => {\n                const distance = Math.abs(cluster.centroid[0] - absPercentageChange);\n                if (distance < minDistance) {\n                    minDistance = distance;\n                    fluctuationCategory = cluster.name;\n                }\n            });\n        }\n\n        coin.fluctuation_category = fluctuationCategory;\n        coin.percentage_change = percentageChange;\n        enriched_payload.push(coin);\n        \n        sql_queries.push({ topic: `INSERT INTO coingecko_history (coin_id, name, symbol, current_price) VALUES ('${coin.id}', '${coin.name.replace(/'/g, \"''\")}', '${coin.symbol}', ${currentPrice});` });\n        \n        newPrices[coin.id] = currentPrice;\n\n        // this event triggers an alert\n        if (fluctuationCategory === 'small') {\n            alerts_payload.push(coin);\n        }\n    });\n}\n\n// Save the completely new price object to the global context\nglobal.set('last_known_prices', newPrices);\n\n// Output 1: SQL queries to save data\n// Output 2: Enriched data for the UI\n// Output 3: Alerts for large fluctuations\nreturn [{ payload: sql_queries }, { payload: enriched_payload }, { payload: alerts_payload }];\n",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 280,
+        "wires": [
+            [
+                "010ed385be0a659d"
+            ],
+            [
+                "e3112835469689af"
+            ],
+            [
+                "7db6cdc8e9da1c01"
+            ]
+        ]
+    },
+    {
+        "id": "010ed385be0a659d",
+        "type": "split",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Split SQL Statements",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 780,
+        "y": 160,
+        "wires": [
+            [
+                "eb29fd360c6a8389"
+            ]
+        ]
+    },
+    {
+        "id": "358dc02ee0199b3f",
+        "type": "sqlite",
+        "z": "6be1f0f6353ba3d4",
+        "mydb": "a6ba64d6f44b10be",
+        "sql": "",
+        "name": "Insert History to DB",
+        "x": 1190,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e3112835469689af",
+        "type": "link out",
+        "z": "6be1f0f6353ba3d4",
+        "name": "to_ui_flow",
+        "links": [
+            "1231b8c740bdd811"
+        ],
+        "x": 775,
+        "y": 280,
+        "wires": [],
+        "l": true
+    },
+    {
+        "id": "eb29fd360c6a8389",
+        "type": "function",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Set msg.topic",
+        "func": "msg.topic = msg.payload.topic;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 980,
+        "y": 160,
+        "wires": [
+            [
+                "358dc02ee0199b3f"
+            ]
+        ]
+    },
+    {
+        "id": "7db6cdc8e9da1c01",
+        "type": "split",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Split Alerts",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 750,
+        "y": 400,
+        "wires": [
+            [
+                "0e2f63472e519d01"
+            ]
+        ]
+    },
+    {
+        "id": "0e2f63472e519d01",
+        "type": "function",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Format Alert Notification",
+        "func": "const coin = msg.payload;\nconst timestamp = new Date().toLocaleString('el-GR');\n\n// Set the routing key\nmsg.amqp_routingKey = `notifications.${coin.id}`;\n\n// Format for easy reading\nmsg.topic = `ALERT: Small Fluctuation for ${coin.name}`;\nmsg.payload = `At ${timestamp}, ${coin.name} showed a small price fluctuation. `;\nmsg.payload += `Current Price: $${coin.current_price.toFixed(2)}, `;\nmsg.payload += `Change (5 min): ${coin.percentage_change.toFixed(2)}%`;\n\n// Format for logging to a file\nmsg.log_entry = `${new Date().toISOString()},${coin.id},${coin.name},${coin.current_price},${coin.percentage_change}`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 460,
+        "wires": [
+            [
+                "527f9cb3c3105406",
+                "e396ad79dfb15e1d",
+                "6260b554dcd3858a"
+            ]
+        ]
+    },
+    {
+        "id": "527f9cb3c3105406",
+        "type": "debug",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Send Push Notification",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "msg",
+        "x": 1260,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "e396ad79dfb15e1d",
+        "type": "file",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Log All Sent Alerts",
+        "filename": ".\\alerts.log",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "utf8",
+        "x": 1240,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6260b554dcd3858a",
+        "type": "amqp-out",
+        "z": "6be1f0f6353ba3d4",
+        "name": "Send Alert to Topic Exchange",
+        "broker": "2eb601ef650cf690",
+        "exchangeName": "amq.topic",
+        "exchangeType": "topic",
+        "exchangeRoutingKey": "msg.amqp_routingKey",
+        "exchangeRoutingKeyType": "msg",
+        "exchangeDurable": true,
+        "amqpProperties": "{}",
+        "rpcTimeoutMilliseconds": "",
+        "outputs": 0,
+        "x": 1280,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "0580a2ef89ea98e0",
+        "type": "inject",
+        "z": "57eb9df0f847111d",
+        "name": "Reset Table (Manual)",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 200,
+        "y": 400,
+        "wires": [
+            [
+                "5e7bb0df99fa54dd"
+            ]
+        ]
+    },
+    {
+        "id": "5e7bb0df99fa54dd",
+        "type": "function",
+        "z": "57eb9df0f847111d",
+        "name": "DROP TABLE coingecko_history",
+        "func": "msg.topic = \"DROP TABLE IF EXISTS coingecko_history;\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 400,
+        "wires": [
+            [
+                "3f678d138c7bf5a3"
+            ]
+        ]
+    },
+    {
+        "id": "3f678d138c7bf5a3",
+        "type": "sqlite",
+        "z": "57eb9df0f847111d",
+        "mydb": "a6ba64d6f44b10be",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "Execute DROP",
+        "x": 700,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1231b8c740bdd811",
+        "type": "link in",
+        "z": "57eb9df0f847111d",
+        "name": "from_ingestion_flow",
+        "links": [
+            "e3112835469689af"
+        ],
+        "x": 155,
+        "y": 200,
+        "wires": [
+            [
+                "d1e0099b8f0549d8"
+            ]
+        ]
+    },
+    {
+        "id": "d1e0099b8f0549d8",
+        "type": "function",
+        "z": "57eb9df0f847111d",
+        "name": "Prepare UI Data",
+        "func": "// msg.payload is the full array of coins with fluctuation info\n// Assign based on the fluctuation category\nmsg.payload.forEach(coin => {\n\n    coin.current_price = '$' + coin.current_price.toFixed(2);\n    \n    switch (coin.fluctuation_category) {\n        case 'small':\n            coin.rowClass = 'success'; // small, stable changes\n            break;\n        case 'medium':\n            coin.rowClass = 'warning'; // medium changes\n            break;\n        case 'large':\n            coin.rowClass = 'danger'; // large, volatile changes\n            break;\n        default:\n            coin.rowClass = 'info'; // new coins or pending model\n            break;\n    }\n});\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "5d357fbd112c9cdb"
+            ]
+        ]
+    },
+    {
+        "id": "5d357fbd112c9cdb",
+        "type": "ui_table",
+        "z": "57eb9df0f847111d",
+        "group": "f544e85ef4afb35b",
+        "name": "Crypto Prices",
+        "order": 0,
+        "width": 12,
+        "height": "8",
+        "columns": [
+            {
+                "field": "name",
+                "title": "Κρυπτονόμισμα",
+                "width": "29%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "current_price",
+                "title": "Τιμή",
+                "width": "16%",
+                "align": "center",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "percentage_change",
+                "title": "Ποσοστό Διακύμανσης",
+                "width": "30%",
+                "align": "center",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "fluctuation_category",
+                "title": "Διακύμανση",
+                "width": "25%",
+                "align": "center",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 0,
+        "cts": false,
+        "x": 600,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "41b6ccaec34c0918",
+        "type": "inject",
+        "z": "57eb9df0f847111d",
+        "name": "Create Table on Deploy",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 160,
+        "y": 100,
+        "wires": [
+            [
+                "ec960834067ba19c"
+            ]
+        ]
+    },
+    {
+        "id": "ec960834067ba19c",
+        "type": "function",
+        "z": "57eb9df0f847111d",
+        "name": "CREATE TABLE statement",
+        "func": "msg.topic = `\nCREATE TABLE IF NOT EXISTS coingecko_history (\n    entry_id INTEGER PRIMARY KEY AUTOINCREMENT,\n    coin_id TEXT NOT NULL,\n    name TEXT,\n    symbol TEXT,\n    current_price REAL NOT NULL,\n    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP\n);`;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 100,
+        "wires": [
+            [
+                "1574eb0e7bdda525"
+            ]
+        ]
+    },
+    {
+        "id": "1574eb0e7bdda525",
+        "type": "sqlite",
+        "z": "57eb9df0f847111d",
+        "mydb": "a6ba64d6f44b10be",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "Create History Table",
+        "x": 860,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5142db9d216e8695",
+        "type": "ui_dropdown",
+        "z": "57eb9df0f847111d",
+        "name": "",
+        "label": "Επιλογή Κρυπτονομίσματος:",
+        "tooltip": "",
+        "place": "Επιλέξτε ένα νόμισμα για να δείτε το ιστορικό του",
+        "group": "c62f2a3a.a8b1d8",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "Bitcoin",
+                "value": "bitcoin",
+                "type": "str"
+            },
+            {
+                "label": "Ethereum",
+                "value": "ethereum",
+                "type": "str"
+            },
+            {
+                "label": "Tether",
+                "value": "tether",
+                "type": "str"
+            },
+            {
+                "label": "XRP",
+                "value": "ripple",
+                "type": "str"
+            },
+            {
+                "label": "BNB",
+                "value": "binancecoin",
+                "type": "str"
+            },
+            {
+                "label": "Solana",
+                "value": "solana",
+                "type": "str"
+            },
+            {
+                "label": "USD Coin",
+                "value": "usd-coin",
+                "type": "str"
+            },
+            {
+                "label": "Dogecoin",
+                "value": "dogecoin",
+                "type": "str"
+            },
+            {
+                "label": "TRON",
+                "value": "tron",
+                "type": "str"
+            },
+            {
+                "label": "Lido Staked Ether",
+                "value": "staked-ether",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 180,
+        "y": 300,
+        "wires": [
+            [
+                "1d2932580c2aad4e"
+            ]
+        ]
+    },
+    {
+        "id": "1d2932580c2aad4e",
+        "type": "function",
+        "z": "57eb9df0f847111d",
+        "name": "Build SQL Query",
+        "func": "const coinId = String(msg.payload).toLowerCase();\n\nconst coinNameMap = {\n    'bitcoin': 'Bitcoin',\n    'ethereum': 'Ethereum',\n    'tether': 'Tether',\n    'binancecoin': 'BNB',\n    'solana': 'Solana',\n    'staked-ether': 'Lido Staked Ether',\n    'usd-coin': 'USD Coin',\n    'ripple': 'XRP',\n    'dogecoin': 'Dogecoin',\n    'tron': 'Tron'\n};\n\nmsg.topic = `\n    SELECT \n        strftime('%H:%M', timestamp) as time_label,\n        current_price\n    FROM coingecko_history\n    WHERE coin_id = '${coinId}'\n    ORDER BY timestamp DESC\n    LIMIT 100;\n`;\n\nmsg.coin_name = coinNameMap[coinId] || coinId;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 300,
+        "wires": [
+            [
+                "70bf7c22d05c2f17"
+            ]
+        ]
+    },
+    {
+        "id": "70bf7c22d05c2f17",
+        "type": "sqlite",
+        "z": "57eb9df0f847111d",
+        "mydb": "a6ba64d6f44b10be",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "Query History DB",
+        "x": 610,
+        "y": 300,
+        "wires": [
+            [
+                "180a8ecbacd6e632"
+            ]
+        ]
+    },
+    {
+        "id": "180a8ecbacd6e632",
+        "type": "function",
+        "z": "57eb9df0f847111d",
+        "name": "Format Data for Chart",
+        "func": "const data = Array.isArray(msg.payload) ? msg.payload.slice().reverse() : [];\n\nif (data.length === 0 || !data[0].time_label || !data[0].current_price) {\n    node.warn(\"No historical data found for this coin.\");\n    return null;\n}\n\nconst labels = data.map(row => row.time_label);\nconst values = data.map(row => row.current_price);\n\nmsg.payload = [{\n    series: [msg.coin_name || \"Unknown Coin\"],\n    data: [values],\n    labels: labels\n}];\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 300,
+        "wires": [
+            [
+                "32d565d671c385a2"
+            ]
+        ]
+    },
+    {
+        "id": "32d565d671c385a2",
+        "type": "ui_chart",
+        "z": "57eb9df0f847111d",
+        "name": "",
+        "group": "c62f2a3a.a8b1d8",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "label": "Διακύμανση Τιμών Κρυπτονομίσματος",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm",
+        "interpolate": "bezier",
+        "nodata": "Αναμονή για επιλογή νομίσματος...",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1090,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9c6d920f2291cb28",
+        "type": "inject",
+        "z": "29e4f1e58b553ca9",
+        "name": "Hourly Cluster Update",
+        "props": [],
+        "repeat": "3600",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 10,
+        "topic": "",
+        "x": 160,
+        "y": 240,
+        "wires": [
+            [
+                "52cd6318dd1dc1d1"
+            ]
+        ]
+    },
+    {
+        "id": "52cd6318dd1dc1d1",
+        "type": "function",
+        "z": "29e4f1e58b553ca9",
+        "name": "Get All Historical Prices",
+        "func": "msg.topic = 'SELECT coin_id, current_price FROM coingecko_history ORDER BY coin_id, timestamp ASC';\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 240,
+        "wires": [
+            [
+                "eea6909370c90155"
+            ]
+        ]
+    },
+    {
+        "id": "eea6909370c90155",
+        "type": "sqlite",
+        "z": "29e4f1e58b553ca9",
+        "mydb": "a6ba64d6f44b10be",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "Query DB",
+        "x": 600,
+        "y": 240,
+        "wires": [
+            [
+                "cd3f1ca8a70aac9d"
+            ]
+        ]
+    },
+    {
+        "id": "cd3f1ca8a70aac9d",
+        "type": "function",
+        "z": "29e4f1e58b553ca9",
+        "name": "Calculate Deltas & Run K-means",
+        "func": "const clusterMaker = global.get('clusters');\n\nif (!clusterMaker) {\n    node.error(\"Clusters module not available. Was it initialized?\");\n    return;\n}\n\nconst historicalData = msg.payload;\nif (!historicalData || historicalData.length < 20) { // Need sufficient data\n    node.warn(\"Not enough historical data to run clustering. Need at least 20 records.\");\n    return;\n}\n\n// 1. Group prices by coin_id\nconst pricesByCoin = historicalData.reduce((acc, row) => {\n    if (!acc[row.coin_id]) {\n        acc[row.coin_id] = [];\n    }\n    acc[row.coin_id].push(row.current_price);\n    return acc;\n}, {});\n\n// 2. Calculate all historical percentage changes\nconst allPercentageChanges = [];\nfor (const coin_id in pricesByCoin) {\n    const prices = pricesByCoin[coin_id];\n    for (let i = 1; i < prices.length; i++) {\n        const lastPrice = prices[i - 1];\n        const currentPrice = prices[i];\n        if (lastPrice !== 0) {\n            const change = Math.abs(((currentPrice - lastPrice) / lastPrice) * 100);\n            allPercentageChanges.push([change]); // Format for clusterMaker\n        }\n    }\n}\n\nif (allPercentageChanges.length < 3) {\n    node.warn(\"Not enough price changes to create 3 clusters.\");\n    return;\n}\n\n// 3. Configure and run clustering\nclusterMaker.k(3); // 3 clusters: small, medium, large\nclusterMaker.iterations(100);\nclusterMaker.data(allPercentageChanges);\nconst clusters = clusterMaker.run();\n\n// 4. Sort clusters by centroid value (low to high)\nclusters.sort((a, b) => a.centroid[0] - b.centroid[0]);\n\n// 5. Label clusters and store globally\nclusters[0].name = 'small';\nclusters[1].name = 'medium';\nclusters[2].name = 'large';\n\nglobal.set('price_fluctuation_clusters', clusters);\n\nnode.log(\"K-means clustering model updated.\");\nmsg.payload = {\n    message: \"Clustering model successfully updated\",\n    clusters_found: 3,\n    total_datapoints: allPercentageChanges.length,\n    clusters: clusters\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 240,
+        "wires": [
+            [
+                "9f675f2db8f8e70d"
+            ]
+        ]
+    },
+    {
+        "id": "9f675f2db8f8e70d",
+        "type": "debug",
+        "z": "29e4f1e58b553ca9",
+        "name": "Cluster Model Output",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload.message",
+        "statusType": "msg",
+        "x": 1130,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "5bcb8ca2ffa2c035",
+        "type": "inject",
+        "z": "29e4f1e58b553ca9",
+        "name": "Initialize K-means Module",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "x": 160,
+        "y": 80,
+        "wires": [
+            [
+                "bb389c15b3a18b8c"
+            ]
+        ]
+    },
+    {
+        "id": "bb389c15b3a18b8c",
+        "type": "function",
+        "z": "29e4f1e58b553ca9",
+        "name": "K-means Implementation",
+        "func": "// K-means implementation\nfunction KMeans() {\n    this._k = 3;\n    this._iterations = 100;\n    this._data = [];\n    this._clusters = [];\n\n    this.k = function(k) { this._k = k; return this; };\n    this.iterations = function(n) { this._iterations = n; return this; };\n    this.data = function(data) { this._data = data; return this; };\n\n    this.initCentroids = function() {\n        this._clusters = [];\n        // To avoid picking the same point, shuffle a copy\n        const uniquePoints = Array.from(new Set(this._data.map(JSON.stringify)), JSON.parse);\n        for (let i = 0; i < this._k; i++) {\n            const randomIndex = Math.floor(Math.random() * uniquePoints.length);\n            this._clusters.push({ centroid: uniquePoints[randomIndex].slice(), points: [] });\n            uniquePoints.splice(randomIndex, 1); // Ensure unique centroids\n        }\n    };\n\n    this.assignPoints = function() {\n        this._clusters.forEach(c => c.points = []);\n        this._data.forEach(point => {\n            let minDist = Infinity;\n            let clusterIndex = 0;\n            this._clusters.forEach((cluster, i) => {\n                const dist = Math.abs(cluster.centroid[0] - point[0]);\n                if (dist < minDist) {\n                    minDist = dist;\n                    clusterIndex = i;\n                }\n            });\n            this._clusters[clusterIndex].points.push(point);\n        });\n    };\n\n    this.updateCentroids = function() {\n        let changed = false;\n        this._clusters.forEach(cluster => {\n            if (cluster.points.length > 0) {\n                const sum = cluster.points.reduce((acc, p) => acc + p[0], 0);\n                const newCentroid = sum / cluster.points.length;\n                if(newCentroid !== cluster.centroid[0]) {\n                    cluster.centroid[0] = newCentroid;\n                    changed = true;\n                }\n            } \n        });\n        return changed;\n    };\n\n    this.run = function() {\n        this.initCentroids();\n        for (let i = 0; i < this._iterations; i++) {\n            this.assignPoints();\n            if(!this.updateCentroids()) {\n                // centroids didn't change\n                break;\n            };\n        }\n        return this._clusters;\n    };\n}\n\n// Create and store the K-means object in the global context\nconst clusterMaker = new KMeans();\nglobal.set('clusters', clusterMaker);\n\nmsg.payload = \"KMeans module initialized\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 7,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 80,
+        "wires": [
+            [
+                "16dc26d8f003f518"
+            ]
+        ]
+    },
+    {
+        "id": "16dc26d8f003f518",
+        "type": "debug",
+        "z": "29e4f1e58b553ca9",
+        "name": "Init KMeans Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 650,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "2a174181fc44ea3b",
+        "type": "amqp-in-manual-ack",
+        "z": "4b8f30f7c6bd39d8",
+        "name": "User2 (premium): all coins",
+        "broker": "2eb601ef650cf690",
+        "prefetch": 0,
+        "noAck": false,
+        "exchangeName": "amq.topic",
+        "exchangeType": "topic",
+        "exchangeRoutingKey": "notifications.*",
+        "exchangeDurable": true,
+        "queueName": "alerts_user2_premium_queue",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 190,
+        "y": 160,
+        "wires": [
+            [
+                "e424a4bc7b63f99e"
+            ]
+        ]
+    },
+    {
+        "id": "8a65aa68a59e10d1",
+        "type": "amqp-in-manual-ack",
+        "z": "4b8f30f7c6bd39d8",
+        "name": "User3 (free): bitcoin only",
+        "broker": "2eb601ef650cf690",
+        "prefetch": 0,
+        "noAck": false,
+        "exchangeName": "amq.topic",
+        "exchangeType": "topic",
+        "exchangeRoutingKey": "notifications.bitcoin",
+        "exchangeDurable": true,
+        "queueName": "alerts_user3_free_queue",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 190,
+        "y": 220,
+        "wires": [
+            [
+                "2426b7cce7730d41"
+            ]
+        ]
+    },
+    {
+        "id": "84cf3a03febb5eab",
+        "type": "debug",
+        "z": "4b8f30f7c6bd39d8",
+        "name": "User1 Received",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 420,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "e424a4bc7b63f99e",
+        "type": "debug",
+        "z": "4b8f30f7c6bd39d8",
+        "name": "User2 Received",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 420,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "2426b7cce7730d41",
+        "type": "debug",
+        "z": "4b8f30f7c6bd39d8",
+        "name": "User3 Received",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 420,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "089a14caaa8654b2",
+        "type": "amqp-in-manual-ack",
+        "z": "4b8f30f7c6bd39d8",
+        "name": "User1 (free): bitcoin only",
+        "broker": "2eb601ef650cf690",
+        "prefetch": 0,
+        "noAck": false,
+        "exchangeName": "amq.topic",
+        "exchangeType": "topic",
+        "exchangeRoutingKey": "notifications.bitcoin",
+        "exchangeDurable": true,
+        "queueName": "alerts_user1_free_queue",
+        "queueExclusive": false,
+        "queueDurable": true,
+        "queueAutoDelete": false,
+        "headers": "{}",
+        "x": 190,
+        "y": 100,
+        "wires": [
+            [
+                "84cf3a03febb5eab"
+            ]
+        ]
+    }
+]
