@@ -1,7 +1,7 @@
 # Real-Time Cryptocurrency Monitoring & Classification System
 
 ## Introduction
-This project was developed as a group project for the **Services and Network Systems** course at [Harokopio University of Athens – Dept. of Informatics and Telematics](https://www.dit.hua.gr).
+This project was developed as a group project for the **Services and Network Systems** course at [Harokopio University of Athens – Dept. of Informatics and Telematics](https://dit.hua.gr).
 It demonstrates a real-time cryptocurrency monitoring, classification, and alerting system built with **[Node-RED](https://nodered.org/)**, **CoinGecko API**, **SQLite**, **K-Means clustering**, and **RabbitMQ**. The system includes a **dashboard** for real-time visualization and analytics.
 
 The system:
